@@ -16,9 +16,6 @@ export default interface ClientDAO{
     getClientById(id: string): Promise<Client>;
     updateClient(client: Client): Promise<Client>;
     deleteClient(id: string): Promise<Client>; // remember to return a Client object.
-
-    deposit(accName:string, amt: number);
-    withdraw(accName:string, amt: number);
     
 }
 
@@ -49,13 +46,6 @@ export class ClientDao implements ClientDAO{
         const client = await this.getClientById(id);
         const response = await container.item(id, id).delete();
         return client;
-    }
-    
-    async deposit(accName: string, amt: number) {
-        throw new Error("Method not implemented.");
-    }
-    async withdraw(accName: string, amt: number) {
-        throw new Error("Method not implemented.");
     }
 
 }

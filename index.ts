@@ -98,19 +98,27 @@ app.get("/clients/:id/accounts", async (req, res)=>{
         const client: Client = await clientDao.getClientById(id);
         let accounts: Account[] = client.accounts;
 
-        if(query){
-            const max = Number(query.amountLessThan.valueOf());
-            const min = Number(query.amountGreaterThan.valueOf());
-            let result: Account[];
-            console.log(`max: ${max}, min: ${min}, `)
+        if(query.amountLessThan && query.amountGreaterThan){
+            const max = Number(query.amountLessThan);
+            const min = Number(query.amountGreaterThan);
+            let result: Account[] = [];
+
+            accounts.forEach(i => {
+                if (i.balance >= min && i.balance <= max){
+                    result.push(i);
+                }
+            });
+
             if (result.length > 0){
                 res.status(200);
                 res.send(result);
             }
+
             else{
-                res.status(404);
-                res.send("No accounts found between the provided values.")
-            }
+            res.status(404);
+            res.send("No accounts found between the provided values.")
+        }
+            
         } else{
             res.status(200);
             res.send(accounts);
@@ -127,7 +135,7 @@ app.patch("/clients/:id/accounts/:name/deposit", async (req, res)=>{
     // deposit given amount (Body {"amount": 500}) return 404 if no account exists.
     let errType = "Client";
     const {id,name} = req.params;
-    const deposit = req.body.amount;
+    const deposit = Number(req.body.amount);
     try{
         const client: Client = await clientDao.getClientById(id)
         errType = "Account"; //if it passes the previous line of code, then Client is not throwing the 404.
@@ -150,7 +158,7 @@ app.patch("/clients/:id/accounts/:name/withdraw", async (req, res)=>{
     // withdraw given amount (Body {"amount", 500}) return 404 if no account exists.
     let errType = "Client";
     const {id, name} = req.params;
-    const withdraw = req.body.amount;
+    const withdraw = Number(req.body.amount);
     try{
         const client: Client = await clientDao.getClientById(id);
         errType = "Account";
