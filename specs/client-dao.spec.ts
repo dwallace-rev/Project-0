@@ -19,7 +19,6 @@ describe("Client DAO Tests", ()=>{
     it("should get all Clients", async () =>{
         const clients: Client[] = await clientDao.getAllClients();
         expect(clients.length).toBeGreaterThan(0);
-
     })
 
     it("should get a specific Client by ID", async ()=>{
