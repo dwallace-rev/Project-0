@@ -4,7 +4,7 @@ import Account from "./entities/account";
 import ClientDAO, { ClientDao } from "./daos/client-dao";
 import errorHandler from "./errors/error-handler";
 import NotFoundError from "./errors/not-found-error";
-import { ModifierFlags } from "typescript";
+import { ModifierFlags, setOriginalNode } from "typescript";
 import InsuficcientBalanceError from "./errors/InsufficientBalanceError";
 import { QueryMetricsConstants } from "@azure/cosmos";
 
@@ -97,33 +97,45 @@ app.get("/clients/:id/accounts", async (req, res)=>{
     try {
         const client: Client = await clientDao.getClientById(id);
         let accounts: Account[] = client.accounts;
+        
+        let max, min;
+        let result: Account[] = [];
 
         if(query.amountLessThan && query.amountGreaterThan){
-            const max = Number(query.amountLessThan);
-            const min = Number(query.amountGreaterThan);
-            let result: Account[] = [];
+            max = Number(query.amountLessThan);
+            min = Number(query.amountGreaterThan);
 
             accounts.forEach(i => {
                 if (i.balance >= min && i.balance <= max){
                     result.push(i);
                 }
             });
-
-            if (result.length > 0){
-                res.status(200);
-                res.send(result);
-            }
-
-            else{
-            res.status(404);
-            res.send("No accounts found between the provided values.")
+        }           
+        else if(query.amountLessThan){
+            max = Number(query.amountLessThan);
+            accounts.forEach(i => {
+                if(i.balance <= max) result.push(i);
+            })
         }
-            
-        } else{
+        else if(query.amountGreaterThan){
+            min = Number(query.amountGreaterThan)
+            accounts.forEach(i => {
+                if (i.balance >= min) result.push(i);
+            });
+        }        
+        else{
             res.status(200);
             res.send(accounts);
         }
-        
+
+        if (result.length > 0){
+            res.status(200);
+            res.send(result);
+        }
+        else {
+            res.status(404)
+            res.send("No accounts found matching provided values");
+        }
         
 
     } catch (error){
@@ -168,7 +180,7 @@ app.patch("/clients/:id/accounts/:name/withdraw", async (req, res)=>{
                 const newbal = client.accounts[modifiedAccount].balance -= withdraw;
             clientDao.updateClient(client);
             res.status(200);
-            res.send(`New balance is: ${newbal}`)
+            res.send(`New balance is: $${newbal}`)
             }
             else throw new InsuficcientBalanceError("Insufficient Balance");
         }
