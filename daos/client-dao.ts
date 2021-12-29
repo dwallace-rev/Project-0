@@ -33,7 +33,7 @@ export class ClientDao implements ClientDAO{
     async getClientById(id: string): Promise<Client> {
         const response = await container.item(id, id).read();
         if (!response.resource){
-            throw new NotFoundError("Resource could not be found", id);
+            throw new NotFoundError("Client could not be found", id);
         }
 
         return response.resource;

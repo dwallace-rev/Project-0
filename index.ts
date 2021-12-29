@@ -5,6 +5,7 @@ import ClientDAO, { ClientDao } from "./daos/client-dao";
 import errorHandler from "./errors/error-handler";
 import NotFoundError from "./errors/not-found-error";
 import InsuficcientBalanceError from "./errors/InsufficientBalanceError";
+import InvalidOperationError from "./errors/invalid-operation";
 
 const app = express();
 app.use(express.json());
@@ -145,8 +146,11 @@ app.patch("/clients/:id/accounts/:name/deposit", async (req, res)=>{
     // deposit given amount (Body {"amount": 500}) return 404 if no account exists.
     let errType = "Client";
     const {id,name} = req.params;
-    const deposit = Number(req.body.amount);
+    let deposit = Number(req.body.amount);
+    
     try{
+        if(deposit < 0)
+            throw new InvalidOperationError("Cannot deposit a negative value");
         const client: Client = await clientDao.getClientById(id)
         errType = "Account"; //if it passes the previous line of code, then Client is not throwing the 404.
         const modifiedAccount = client.accounts.findIndex(i=> i.name === name);
@@ -168,8 +172,10 @@ app.patch("/clients/:id/accounts/:name/withdraw", async (req, res)=>{
     // withdraw given amount (Body {"amount", 500}) return 404 if no account exists.
     let errType = "Client";
     const {id, name} = req.params;
-    const withdraw = Number(req.body.amount);
+    let withdraw = Number(req.body.amount);
     try{
+        if (withdraw < 0)
+            throw new InvalidOperationError("Cannot withdraw a negative value");
         const client: Client = await clientDao.getClientById(id);
         errType = "Account";
         const modifiedAccount = client.accounts.findIndex(i=> i.name === name);
