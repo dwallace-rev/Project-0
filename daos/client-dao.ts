@@ -1,9 +1,7 @@
-import { ClientContext, CosmosClient } from "@azure/cosmos";
+import {CosmosClient } from "@azure/cosmos";
 import {v4} from "uuid";
 import Client from "../entities/client";
-import Account from "../entities/account";
 import NotFoundError from "../errors/not-found-error";
-import { response } from "express";
 
 const dbclient = new CosmosClient(process.env.COSMOS_CONNECTION);
 const database = dbclient.database("banking-api");
