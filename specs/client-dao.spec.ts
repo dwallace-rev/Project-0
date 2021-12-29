@@ -10,7 +10,7 @@ describe("Client DAO Tests", ()=>{
     const clientDao: ClientDAO = new ClientDao();
     let savedResult: Client = null;
 
-    it("should create a Client and return a 201 status code", async () => {
+    it("should create a Client", async () => {
         const testClient: Client = {fname: "John", lname:"Zoidberg", accounts: [], id: ''};
         savedResult = await clientDao.createClient(testClient);
         expect(savedResult.id).not.toBeFalsy();
