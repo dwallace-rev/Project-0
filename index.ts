@@ -4,9 +4,7 @@ import Account from "./entities/account";
 import ClientDAO, { ClientDao } from "./daos/client-dao";
 import errorHandler from "./errors/error-handler";
 import NotFoundError from "./errors/not-found-error";
-import { ModifierFlags, setOriginalNode } from "typescript";
 import InsuficcientBalanceError from "./errors/InsufficientBalanceError";
-import { QueryMetricsConstants } from "@azure/cosmos";
 
 const app = express();
 app.use(express.json());
@@ -123,7 +121,7 @@ app.get("/clients/:id/accounts", async (req, res)=>{
                 if (i.balance >= min) result.push(i);
             });
         }        
-        else{
+        else {
             res.status(200);
             res.send(accounts);
         }
@@ -132,7 +130,7 @@ app.get("/clients/:id/accounts", async (req, res)=>{
             res.status(200);
             res.send(result);
         }
-        else {
+        else if (max || min){
             res.status(404)
             res.send("No accounts found matching provided values");
         }
@@ -178,13 +176,33 @@ app.patch("/clients/:id/accounts/:name/withdraw", async (req, res)=>{
         if (modifiedAccount != -1){
             if (client.accounts[modifiedAccount].balance >= withdraw){
                 const newbal = client.accounts[modifiedAccount].balance -= withdraw;
-            clientDao.updateClient(client);
-            res.status(200);
-            res.send(`New balance is: $${newbal}`)
+                clientDao.updateClient(client);
+                res.status(200);
+                res.send(`New balance is: $${newbal}`)
             }
             else throw new InsuficcientBalanceError("Insufficient Balance");
         }
         else throw new NotFoundError("No such account exists", name);
+    }
+    catch (error){
+        errorHandler(error, res, errType);
+    }
+})
+
+app.delete("/clients/:id/accounts/:name", async (req, res)=>{
+    let errType = "Client";
+    const {id, name} = req.params;
+    try{
+        const client: Client = await clientDao.getClientById(id);
+        errType = "Account";
+        const accToDelete = client.accounts.findIndex(i=> i.name === name)
+        if (accToDelete != -1){
+            const deleted: Account[] = client.accounts.splice(accToDelete, 1);
+            clientDao.updateClient(client);
+            res.status(205);
+            res.send(`Successfully deleted account: ${deleted[0].name}`);
+        }
+        else throw new NotFoundError("No such accounts exists", name);
     }
     catch (error){
         errorHandler(error, res, errType);
